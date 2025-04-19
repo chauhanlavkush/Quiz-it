@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: quiz-backend
+    env: node
+    plan: free
+    region: oregon
+    rootDir: Backend-MERN_Quiz_APP
+    buildCommand: npm install
+    startCommand: npm start
+    nodeVersion: 18
