@@ -4,6 +4,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import * as yup from "yup";
 
 export const Register = () => {
   const [user, setUser] = useState({
@@ -12,29 +13,50 @@ export const Register = () => {
     password: "",
     reEnterPassword: "",
   });
+
   const navigate = useNavigate();
-  const register = () => {
-    const { name, email, password, reEnterPassword } = user;
-    if (name && email && password && password === reEnterPassword) {
+
+  const schema = yup.object().shape({
+    name: yup
+      .string()
+      .matches(/^[A-Za-z\s]+$/, "Name should only contain letters and spaces")
+      .required("Name is required"),
+    email: yup
+      .string()
+      .required("Email is required")
+      .email("Invalid email format")
+      .matches(
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in|org|net)$/,
+        "Email must end with .com, .in, .org, or .net"
+      ),
+    password: yup
+      .string()
+      .required("Password is required")
+      .min(6, "Password must be at least 6 characters"),
+    reEnterPassword: yup
+      .string()
+      .required("Please confirm your password")
+      .oneOf([yup.ref("password")], "Passwords must match"),
+  });
+  
+
+  const register = async () => {
+    try {
+      await schema.validate(user, { abortEarly: false });
+
       axios
         .post("https://mern-quiz-server-sudhir.onrender.com/register", user)
         .then((res) => {
-          toast("Successfully Registered", {
-            type: "success",
-          });
+          toast.success("Successfully Registered");
           setTimeout(() => {
             navigate("/login");
           }, 3000);
         })
         .catch((err) => {
-          toast("Invalid Input", {
-            type: "error",
-          });
+          toast.error("Registration failed. Try again.");
         });
-    } else {
-      toast("Invalid Input", {
-        type: "error",
-      });
+    } catch (validationError) {
+      validationError.inner.forEach((err) => toast.error(err.message));
     }
   };
 
@@ -56,30 +78,30 @@ export const Register = () => {
           value={user.name}
           placeholder="Your Name"
           onChange={handleChange}
-        ></input>
+        />
         <input
           type="text"
           name="email"
           value={user.email}
           placeholder="Your Email"
           onChange={handleChange}
-        ></input>
+        />
         <input
           type="password"
           name="password"
           value={user.password}
           placeholder="Your Password"
           onChange={handleChange}
-        ></input>
+        />
         <input
           type="password"
           name="reEnterPassword"
           value={user.reEnterPassword}
           placeholder="Re-enter Password"
           onChange={handleChange}
-        ></input>
+        />
         <button
-          className="p-2 pl-24 pr-24 clicabledivRegsiter bg-blue-500 h-10 rounded-md text-white  text-xl "
+          className="p-2 pl-24 pr-24 clicabledivRegsiter bg-blue-500 h-10 rounded-md text-white text-xl"
           onClick={register}
         >
           Register
@@ -87,13 +109,12 @@ export const Register = () => {
         <ToastContainer />
         <div>OR</div>
         <Link to="/login">
-          {" "}
-          <div className="p-2 pl-36 pr-28 clicablediv bg-blue-500 h-10 rounded-md text-white  text-xl ">
+          <div className="p-2 pl-36 pr-28 clicablediv bg-blue-500 h-10 rounded-md text-white text-xl">
             Login
-          </div>{" "}
+          </div>
         </Link>
       </div>
-      <button className="mb-8 w-1/2 ml-48 ">
+      <button className="mb-8 w-1/2 ml-48">
         <img src="./register.gif" alt="registergif" />
       </button>
     </div>

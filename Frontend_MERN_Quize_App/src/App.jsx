@@ -34,7 +34,6 @@ function App() {
         <Route path="/result" element={<Resultshow />} />
         <Route path="/showallanswer" element={<ShowAllAnswers />} />
       </Routes>
-      <Footer />
     </div>
   );
 }

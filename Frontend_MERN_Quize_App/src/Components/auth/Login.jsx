@@ -11,14 +11,32 @@ import {
 } from "../../Redux/action.js";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import * as yup from "yup";
 
 export const Login = () => {
   const userId = useSelector((state) => state.mernQuize.userId);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
   const [user, setUser] = useState({
     email: "",
     password: "",
+  });
+
+  // ✅ Yup validation schema
+  const schema = yup.object().shape({
+    email: yup
+      .string()
+      .required("Email is required")
+      .email("Invalid email format")
+      .matches(
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in|org|net)$/,
+        "Email must end with .com, .in, .org, or .net"
+      ),
+    password: yup
+      .string()
+      .required("Password is required")
+      .min(6, "Password must be at least 6 characters"),
   });
 
   const handleChange = (e) => {
@@ -29,46 +47,36 @@ export const Login = () => {
     });
   };
 
-  const login = () => {
-    axios
-      .post("https://mern-quiz-server-sudhir.onrender.com/login", user)
-      .then((res) => {
-        if (res.data.user.email == "sudhirchavhan100@gmail.com") {
-          dispatch(loginAdminId(res.data.user._id));
-          dispatch(loginAdminName(res.data.user.name));
-          toast(`Welcome Admin ${res.data.user.name}`, {
-            type: "success",
-          });
+  const login = async () => {
+    try {
+      await schema.validate(user, { abortEarly: false });
 
-          setTimeout(() => {
-            navigate("/profile");
-          }, 4000);
-        } else {
-          dispatch(loginUser(res.data.user._id));
-          dispatch(loginUserName(res.data.user.name));
-          toast(`Successfully Login `, {
-            type: "success",
-          });
-          setTimeout(() => {
-            navigate("/profile");
-          }, 3000);
-        }
-
-        //         if(res.data.message=="login successfully"){
-        // alert("Login successfully")
-        //         }
-        // navigate('/')
-      })
-      .catch((err) => {
-        toast("Invalid Credientials", {
-          type: "error",
+      axios
+        .post("https://mern-quiz-server-sudhir.onrender.com/login", user)
+        .then((res) => {
+          if (res.data.user.email === "sudhirchavhan100@gmail.com") {
+            dispatch(loginAdminId(res.data.user._id));
+            dispatch(loginAdminName(res.data.user.name));
+            toast.success(`Welcome Admin ${res.data.user.name}`);
+            setTimeout(() => navigate("/profile"), 4000);
+          } else {
+            dispatch(loginUser(res.data.user._id));
+            dispatch(loginUserName(res.data.user.name));
+            toast.success("Successfully Logged In");
+            setTimeout(() => navigate("/profile"), 3000);
+          }
+        })
+        .catch((err) => {
+          toast.error("Invalid Credentials");
         });
-      });
+    } catch (validationError) {
+      validationError.inner.forEach((err) => toast.error(err.message));
+    }
   };
 
   return (
-    <div className=" flex w-4/5 justify-around m-auto mt-16 mb-16">
-      <div className="login mb-28 w-1/2 ml-48 ">
+    <div className="flex w-4/5 justify-around m-auto mt-16 mb-16">
+      <div className="login mb-28 w-1/2 ml-48">
         <h1 className="text-2xl font-semibold">Login</h1>
         <input
           type="text"
@@ -76,21 +84,18 @@ export const Login = () => {
           value={user.email}
           onChange={handleChange}
           placeholder="Enter your Email"
-        ></input>
+        />
         <input
           type="password"
           name="password"
           value={user.password}
           onChange={handleChange}
           placeholder="Enter your Password"
-        ></input>
+        />
         <div>
-          {" "}
           <button
-            onClick={() => {
-              login();
-            }}
-            className="p-2 pl-28 pr-28 bg-blue-500 h-10 rounded-md text-white  text-xl "
+            onClick={login}
+            className="p-2 pl-28 pr-28 bg-blue-500 h-10 rounded-md text-white text-xl"
           >
             Login
           </button>
@@ -98,10 +103,9 @@ export const Login = () => {
         </div>
         <div>OR</div>
         <Link to="/register">
-          {" "}
-          <button className="p-2 pl-28 pr-24 bg-blue-500 h-10 rounded-md text-white  text-xl ">
+          <button className="p-2 pl-28 pr-24 bg-blue-500 h-10 rounded-md text-white text-xl">
             Register
-          </button>{" "}
+          </button>
         </Link>
       </div>
       <div className="w-1/2 ml-24">
